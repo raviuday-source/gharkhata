@@ -32,6 +32,7 @@ const defaultCategories = [
     items: [
       ["Vegetables", "daily"],
       ["Groceries", "daily"],
+      ["Bakery & Snacks", "daily"],
       ["Food outside expense", "occasional"],
       ["Food in Cisco", "daily"]
     ]

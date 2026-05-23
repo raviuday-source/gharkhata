@@ -1,4 +1,4 @@
-const CACHE_NAME = "gharkhata-v7";
+const CACHE_NAME = "gharkhata-v8";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,8 +6,8 @@ const ASSETS = [
   "./app.js",
   "./firebase-config.js",
   "./manifest.webmanifest",
-  "./icons/icon-192.svg",
-  "./icons/icon-512.svg"
+  "./icons/apple-stem-192.svg",
+  "./icons/apple-stem-512.svg"
 ];
 
 self.addEventListener("install", (event) => {

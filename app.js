@@ -87,7 +87,8 @@ const state = {
   expenses: loadJson(STORAGE_KEY, []),
   categories: loadJson(CATEGORY_KEY, cloneCategories(defaultCategories)),
   selectedMonth: currentMonthKey(),
-  categoryQuery: ""
+  categoryQuery: "",
+  currentPage: routeFromHash()
 };
 
 const firebaseStore = {
@@ -102,6 +103,7 @@ const firebaseStore = {
 };
 
 const els = {
+  pages: [...document.querySelectorAll("[data-page]")],
   appShell: document.querySelector("#appShell"),
   passcodeScreen: document.querySelector("#passcodeScreen"),
   passcodeForm: document.querySelector("#passcodeForm"),
@@ -135,6 +137,7 @@ const els = {
   categoryLegend: document.querySelector("#categoryLegend"),
   categoryList: document.querySelector("#categoryList"),
   categoryCount: document.querySelector("#categoryCount"),
+  categoryLinkCount: document.querySelector("#categoryLinkCount"),
   categorySearch: document.querySelector("#categorySearch"),
   expenseList: document.querySelector("#expenseList"),
   manageCategories: document.querySelector("#manageCategories"),
@@ -147,9 +150,6 @@ const els = {
   itemDialog: document.querySelector("#itemDialog"),
   itemPickerList: document.querySelector("#itemPickerList"),
   closeItemDialog: document.querySelector("#closeItemDialog"),
-  reportForm: document.querySelector("#reportForm"),
-  email: document.querySelector("#emailInput"),
-  reportType: document.querySelector("#reportType"),
   lockApp: document.querySelector("#lockApp")
 };
 
@@ -161,6 +161,10 @@ render();
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
+
+window.addEventListener("hashchange", () => {
+  renderRoute(true);
+});
 
 els.form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -261,14 +265,6 @@ els.addCategoryItem.addEventListener("click", async () => {
   }
   els.categoryDialog.close();
   render();
-});
-
-els.reportForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const report = buildReport(els.reportType.value, state.selectedMonth);
-  const subject = encodeURIComponent(`GharKhata report - ${formatMonth(state.selectedMonth)}`);
-  const body = encodeURIComponent(report);
-  window.location.href = `mailto:${encodeURIComponent(els.email.value)}?subject=${subject}&body=${body}`;
 });
 
 function setupPasscode() {
@@ -459,6 +455,18 @@ function render() {
   renderMonthOptions();
   renderCategories();
   renderDashboard();
+  renderRoute();
+}
+
+function renderRoute(shouldScroll = false) {
+  state.currentPage = routeFromHash();
+  els.pages.forEach((page) => {
+    page.hidden = page.dataset.page !== state.currentPage;
+  });
+
+  if (shouldScroll) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 }
 
 function updateNotesCount() {
@@ -555,6 +563,7 @@ function renderCategories() {
   els.categoryCount.textContent = query
     ? `${visibleItemCount} ${visibleItemCount === 1 ? "match" : "matches"}`
     : `${items.length} items`;
+  els.categoryLinkCount.textContent = `${items.length} items`;
   els.categoryNames.innerHTML = state.categories.map((category) => `<option value="${escapeHtml(category.name)}"></option>`).join("");
 
   if (!groups.length) {
@@ -727,47 +736,6 @@ function renderExpenseList(expenses) {
     .join("");
 }
 
-function buildReport(type, month) {
-  const rows = state.expenses.filter((expense) => monthKey(expense.date) === month);
-  const total = sum(rows);
-  const grouped = [...groupByCategory(rows).entries()].sort((a, b) => b[1] - a[1]);
-  const lines = [
-    "From: do-not-reply@gmail.com",
-    `GharKhata report for ${formatMonth(month)}`,
-    `Total: ${formatInr(total)}`,
-    ""
-  ];
-
-  if (type === "analysis" || type === "both") {
-    lines.push("Analysis");
-    if (grouped.length) {
-      grouped.forEach(([category, amount]) => {
-        const percent = total ? Math.round((amount / total) * 100) : 0;
-        lines.push(`- ${category}: ${formatInr(amount)} (${percent}%)`);
-      });
-    } else {
-      lines.push("- No expenses recorded.");
-    }
-    lines.push("");
-  }
-
-  if (type === "raw" || type === "both") {
-    lines.push("Raw expenses");
-    if (rows.length) {
-      rows
-        .slice()
-        .sort((a, b) => a.date.localeCompare(b.date))
-        .forEach((expense) => {
-          lines.push(`${expense.date}, ${expense.category}, ${expense.item}, ${formatInr(expense.amount)}, ${expense.notes || "-"}`);
-        });
-    } else {
-      lines.push("No expenses recorded.");
-    }
-  }
-
-  return lines.join("\n");
-}
-
 function allItems() {
   return state.categories.flatMap((category) =>
     category.items.map(([item, cadence]) => ({ category: category.name, item, cadence }))
@@ -874,6 +842,11 @@ function compactInr(value) {
 
 function currentMonthKey() {
   return monthKey(formatDateInput(new Date()));
+}
+
+function routeFromHash() {
+  const page = window.location.hash.replace("#", "");
+  return ["home", "categories", "analytics"].includes(page) ? page : "home";
 }
 
 function monthKey(date) {

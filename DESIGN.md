@@ -19,15 +19,14 @@ The app does not use Cisco logos or imply Cisco endorsement.
 
 - Utilities & Bills: BESCOM, Water Bill, Internet Bill, Airtel Mobile, Tata Play, Gas Cylinder
 - Household Help & Services: Maid Salary, Inspector Shop
-- Food & Groceries: Vegetables, Groceries, Food outside expense, Food in Cisco
+- Food & Groceries: Vegetables, Groceries, Bakery & Snacks, Food outside expense, Food in Cisco
 - Travel & Transport: Petrol, Metro Card, Auto charges, KSRTC tickets
 - Family Allowances: Nikita Pay std, Nikita Pay misc, Raghav Pay
 - Investments & Insurance: Raghav MF 1, Raghav MF 2, LIC, Stock purchase domestic, Stock purchase international
 - Health & Wellness: Doctor consultation charge, Medicine / pills, Cosmetic purchase
-- Personal, Learning & Worship: Clothes, Books and Stationaries, Flower, Temple / Hundi
+- Clothing, Stationary & Flower/Temple: Clothes, Books and Stationaries, Flower, Temple / Hundi
 
 ## Product Notes
 
-- Data is local to the phone through browser storage.
-- Email reports are prepared through the phone mail app in this prototype.
-- Automatic sending from `do-not-reply@gmail.com` needs a backend email service so credentials stay secure.
+- Data syncs through Firebase Firestore, with browser storage as fallback.
+- Home focuses on daily expense entry; Categories and Analytics & Trends open as separate in-app pages.

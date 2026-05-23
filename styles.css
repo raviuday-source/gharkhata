@@ -39,6 +39,10 @@ button {
   cursor: pointer;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .passcode-screen {
   position: fixed;
   inset: 0;
@@ -170,8 +174,8 @@ main {
 .entry-panel,
 .analytics-panel,
 .category-panel,
-.report-panel,
 .table-panel,
+.home-link-panel,
 .chart-card {
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid rgba(220, 232, 239, 0.95);
@@ -224,8 +228,8 @@ main {
 .entry-panel,
 .analytics-panel,
 .category-panel,
-.report-panel,
-.table-panel {
+.table-panel,
+.home-link-panel {
   padding: 14px;
 }
 
@@ -241,8 +245,19 @@ main {
   margin-bottom: 10px;
 }
 
+.section-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.section-actions select {
+  min-width: 156px;
+}
+
 .expense-form,
-.report-form,
 .dialog-card {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -421,9 +436,13 @@ select:focus {
 }
 
 .ghost-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--cisco-deep);
   background: var(--soft-blue);
   padding: 0 12px;
+  text-decoration: none;
   white-space: nowrap;
 }
 
@@ -470,7 +489,7 @@ select:focus {
 }
 
 .chart-header p,
-.report-note {
+.page-link span {
   margin-top: 3px;
   color: var(--muted);
   font-size: 0.76rem;
@@ -499,6 +518,31 @@ canvas {
 .legend {
   grid-template-columns: 1fr 1fr;
   margin-top: 10px;
+}
+
+.home-link-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.page-link {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(4, 159, 217, 0.28);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(0, 188, 235, 0.12), rgba(110, 190, 74, 0.09)),
+    #fff;
+  color: var(--cisco-deep);
+  padding: 12px;
+  text-decoration: none;
+}
+
+.page-link strong {
+  font-size: 0.98rem;
 }
 
 .legend-item,
@@ -571,8 +615,7 @@ canvas {
   padding-top: 10px;
 }
 
-.chip,
-.sender-pill {
+.chip {
   display: inline-flex;
   align-items: center;
   min-height: 28px;
@@ -597,15 +640,6 @@ canvas {
 .chip.occasional {
   background: #edf1f5;
   color: #4a5964;
-}
-
-.report-form {
-  grid-template-columns: 1fr;
-}
-
-.sender-pill {
-  border-radius: 8px;
-  white-space: nowrap;
 }
 
 .expense-row {
@@ -747,7 +781,9 @@ dialog::backdrop {
 
   .summary-grid,
   .analytics-panel,
-  .bottom-pie-panel {
+  .bottom-pie-panel,
+  .category-panel,
+  .home-link-panel {
     grid-column: 1 / -1;
   }
 

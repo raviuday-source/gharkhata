@@ -36,7 +36,7 @@
       </header>
 
       <main>
-        <section class="summary-grid" aria-label="Monthly overview">
+        <section class="summary-grid" data-page="home" aria-label="Monthly overview">
           <article class="metric-card primary">
             <span>This month</span>
             <strong id="monthTotal">₹0</strong>
@@ -54,7 +54,7 @@
           </article>
         </section>
 
-        <section class="entry-panel" aria-labelledby="entryTitle">
+        <section class="entry-panel" data-page="home" aria-labelledby="entryTitle">
           <div class="section-title">
             <h2 id="entryTitle">Add Expense</h2>
             <button class="ghost-button" id="manageCategories" type="button">Categories</button>
@@ -90,10 +90,13 @@
           </form>
         </section>
 
-        <section class="analytics-panel" aria-labelledby="analyticsTitle">
+        <section class="analytics-panel" data-page="analytics" aria-labelledby="analyticsTitle">
           <div class="section-title compact">
-            <h2 id="analyticsTitle">Monthly Analysis</h2>
-            <select id="monthFilter" aria-label="Month filter"></select>
+            <h2 id="analyticsTitle">Analytics & Trends</h2>
+            <div class="section-actions">
+              <select id="monthFilter" aria-label="Month filter"></select>
+              <a class="ghost-button compact-button" href="#home">Home</a>
+            </div>
           </div>
 
           <div class="chart-card">
@@ -119,10 +122,13 @@
           </div>
         </section>
 
-        <section class="category-panel" aria-labelledby="categoryTitle">
+        <section class="category-panel" data-page="categories" aria-labelledby="categoryTitle">
           <div class="section-title">
             <h2 id="categoryTitle">Categories</h2>
-            <span id="categoryCount"></span>
+            <div class="section-actions">
+              <span id="categoryCount"></span>
+              <a class="ghost-button compact-button" href="#home">Home</a>
+            </div>
           </div>
           <label class="category-search">
             <span>Search item</span>
@@ -131,39 +137,24 @@
           <div class="category-list" id="categoryList"></div>
         </section>
 
-        <section class="report-panel" aria-labelledby="reportTitle">
-          <div class="section-title">
-            <h2 id="reportTitle">Email Report</h2>
-            <span class="sender-pill">From: do-not-reply@gmail.com</span>
-          </div>
-          <form id="reportForm" class="report-form">
-            <label>
-              <span>Send to</span>
-              <input id="emailInput" name="email" type="email" placeholder="name@example.com" required>
-            </label>
-            <label>
-              <span>Report type</span>
-              <select id="reportType" name="reportType">
-                <option value="raw">Raw expense</option>
-                <option value="analysis">Analysis only</option>
-                <option value="both">Both</option>
-              </select>
-            </label>
-            <button class="submit-button" type="submit">Prepare Email</button>
-          </form>
-          <p class="report-note">
-            This prepares the report in your mail app. A production backend is needed to send automatically from do-not-reply@gmail.com.
-          </p>
-        </section>
-
-        <section class="table-panel" aria-labelledby="recentTitle">
+        <section class="table-panel" data-page="home" aria-labelledby="recentTitle">
           <div class="section-title compact">
             <h2 id="recentTitle">Recent Expenses</h2>
           </div>
           <div class="expense-list" id="expenseList"></div>
         </section>
 
-        <section class="bottom-pie-panel chart-card" aria-labelledby="bottomPieTitle">
+        <nav class="home-link-panel" data-page="home" aria-label="More pages">
+          <a class="page-link" href="#analytics">
+            <strong>Analytics & Trends</strong>
+          </a>
+          <a class="page-link" href="#categories">
+            <strong>Categories</strong>
+            <span id="categoryLinkCount">32 items</span>
+          </a>
+        </nav>
+
+        <section class="bottom-pie-panel chart-card" data-page="analytics" aria-labelledby="bottomPieTitle">
           <div class="chart-header">
             <div>
               <h2 id="bottomPieTitle">Monthly Category Pie</h2>

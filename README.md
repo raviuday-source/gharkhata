@@ -7,9 +7,9 @@ GharKhata is a mobile-first household expense tracker for INR entries. It is bui
 - Sorted starter categories for the provided household expense list.
 - Shared storage using Firebase Firestore, with `localStorage` fallback.
 - INR amount entry with date, item, category, and a 20-character notes field.
-- Monthly total, daily average, top category, category mix chart, and six-month trend chart.
+- Monthly total, daily average, top category, category mix chart, monthly pie chart, and six-month trend chart.
+- Separate Categories and Analytics & Trends pages linked from the home screen.
 - Category/item management for future additions.
-- Email report preparation for raw expenses, analysis only, or both.
 
 ## Run
 
@@ -48,7 +48,3 @@ service cloud.firestore {
 ```
 
 The current passcode is a convenience lock in the app UI, not a server-side security boundary. For stronger private-family access later, replace anonymous auth with named user sign-in and rules that only allow your household users.
-
-## Email Sender Note
-
-The app prepares an email report from the phone using `mailto:`. Sending automatically from `do-not-reply@gmail.com` requires a backend email service or SMTP relay because Gmail credentials cannot be safely embedded in a local mobile app.

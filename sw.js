@@ -1,9 +1,10 @@
-const CACHE_NAME = "gharkhata-v4";
+const CACHE_NAME = "gharkhata-v5";
 const ASSETS = [
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
+  "./firebase-config.js",
   "./manifest.webmanifest",
   "./icons/icon-192.svg",
   "./icons/icon-512.svg"

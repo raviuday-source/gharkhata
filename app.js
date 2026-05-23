@@ -2,6 +2,9 @@ const STORAGE_KEY = "gharkhata-expenses-v1";
 const CATEGORY_KEY = "gharkhata-categories-v1";
 const PASSCODE = "1234";
 const PASSCODE_SESSION_KEY = "gharkhata-unlocked-v1";
+const FIREBASE_SDK_VERSION = "12.13.0";
+const FIREBASE_CONFIG = window.GHARKHATA_FIREBASE_CONFIG || {};
+const FIREBASE_HOUSEHOLD_ID = window.GHARKHATA_HOUSEHOLD_ID || "ghar-khata-home";
 
 const colors = ["#00bceb", "#005073", "#6ebe4a", "#fbab18", "#049fd9", "#097dbc", "#7f5af0", "#ef4565", "#2cb67d"];
 
@@ -81,8 +84,17 @@ const defaultCategories = [
 
 const state = {
   expenses: loadJson(STORAGE_KEY, []),
-  categories: loadJson(CATEGORY_KEY, defaultCategories),
+  categories: loadJson(CATEGORY_KEY, cloneCategories(defaultCategories)),
   selectedMonth: currentMonthKey()
+};
+
+const firebaseStore = {
+  started: false,
+  connected: false,
+  api: null,
+  expensesRef: null,
+  categoriesRef: null,
+  unsubscribers: []
 };
 
 const els = {
@@ -91,6 +103,7 @@ const els = {
   passcodeForm: document.querySelector("#passcodeForm"),
   passcodeInput: document.querySelector("#passcodeInput"),
   passcodeError: document.querySelector("#passcodeError"),
+  syncStatus: document.querySelector("#syncStatus"),
   form: document.querySelector("#expenseForm"),
   date: document.querySelector("#dateInput"),
   amount: document.querySelector("#amountInput"),
@@ -110,6 +123,10 @@ const els = {
   chartTotal: document.querySelector("#chartTotal"),
   chartSubtitle: document.querySelector("#chartSubtitle"),
   categoryChart: document.querySelector("#categoryChart"),
+  bottomPieChart: document.querySelector("#bottomPieChart"),
+  bottomPieLegend: document.querySelector("#bottomPieLegend"),
+  bottomPieSubtitle: document.querySelector("#bottomPieSubtitle"),
+  bottomPieTotal: document.querySelector("#bottomPieTotal"),
   trendChart: document.querySelector("#trendChart"),
   categoryLegend: document.querySelector("#categoryLegend"),
   categoryList: document.querySelector("#categoryList"),
@@ -128,9 +145,7 @@ const els = {
   reportForm: document.querySelector("#reportForm"),
   email: document.querySelector("#emailInput"),
   reportType: document.querySelector("#reportType"),
-  seedDemo: document.querySelector("#seedDemo"),
-  lockApp: document.querySelector("#lockApp"),
-  clearData: document.querySelector("#clearData")
+  lockApp: document.querySelector("#lockApp")
 };
 
 els.date.value = formatDateInput(new Date());
@@ -142,7 +157,7 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
-els.form.addEventListener("submit", (event) => {
+els.form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const item = findItem(els.item.value);
   const amount = Number(els.amount.value);
@@ -151,7 +166,7 @@ els.form.addEventListener("submit", (event) => {
     return;
   }
 
-  state.expenses.unshift({
+  const expense = {
     id: crypto.randomUUID(),
     date: els.date.value,
     amount,
@@ -160,9 +175,16 @@ els.form.addEventListener("submit", (event) => {
     cadence: item.cadence,
     notes: els.notes.value.trim().slice(0, 20),
     createdAt: new Date().toISOString()
-  });
+  };
 
-  saveJson(STORAGE_KEY, state.expenses);
+  try {
+    await addExpense(expense);
+  } catch (error) {
+    console.warn("Firestore save failed; keeping the entry on this phone.", error);
+    saveExpenseLocally(expense);
+    setSyncStatus("Saved locally - Firestore error", "warning");
+  }
+
   state.selectedMonth = monthKey(els.date.value);
   els.amount.value = "";
   els.notes.value = "";
@@ -205,7 +227,7 @@ els.manageCategories.addEventListener("click", () => {
   els.categoryDialog.showModal();
 });
 
-els.addCategoryItem.addEventListener("click", () => {
+els.addCategoryItem.addEventListener("click", async () => {
   const categoryName = els.newCategory.value.trim();
   const itemName = els.newItem.value.trim();
   if (!categoryName || !itemName) return;
@@ -220,7 +242,13 @@ els.addCategoryItem.addEventListener("click", () => {
     group.items.push([itemName, els.newCadence.value]);
   }
 
-  saveJson(CATEGORY_KEY, state.categories);
+  try {
+    await saveCategories();
+  } catch (error) {
+    console.warn("Firestore category save failed; keeping the category on this phone.", error);
+    saveJson(CATEGORY_KEY, state.categories);
+    setSyncStatus("Category saved locally", "warning");
+  }
   els.categoryDialog.close();
   render();
 });
@@ -231,20 +259,6 @@ els.reportForm.addEventListener("submit", (event) => {
   const subject = encodeURIComponent(`GharKhata report - ${formatMonth(state.selectedMonth)}`);
   const body = encodeURIComponent(report);
   window.location.href = `mailto:${encodeURIComponent(els.email.value)}?subject=${subject}&body=${body}`;
-});
-
-els.seedDemo.addEventListener("click", () => {
-  if (state.expenses.length && !confirm("Add sample entries to existing data?")) return;
-  state.expenses = [...sampleExpenses(), ...state.expenses];
-  saveJson(STORAGE_KEY, state.expenses);
-  render();
-});
-
-els.clearData.addEventListener("click", () => {
-  if (!state.expenses.length || !confirm("Clear all saved expenses from this device?")) return;
-  state.expenses = [];
-  saveJson(STORAGE_KEY, state.expenses);
-  render();
 });
 
 function setupPasscode() {
@@ -281,12 +295,126 @@ function unlockApp() {
   els.passcodeScreen.classList.add("is-hidden");
   els.appShell.classList.remove("is-locked");
   els.appShell.removeAttribute("aria-hidden");
+  startDataStore();
 }
 
 function lockApp() {
   els.passcodeScreen.classList.remove("is-hidden");
   els.appShell.classList.add("is-locked");
   els.appShell.setAttribute("aria-hidden", "true");
+}
+
+function startDataStore() {
+  if (firebaseStore.started) return;
+  firebaseStore.started = true;
+  setupFirestore().catch((error) => {
+    console.warn("Firestore setup failed; using phone storage.", error);
+    setSyncStatus("Phone local storage", "local");
+  });
+}
+
+async function setupFirestore() {
+  if (!hasFirebaseConfig()) {
+    setSyncStatus("Phone local storage", "local");
+    return;
+  }
+
+  setSyncStatus("Connecting Firestore", "loading");
+
+  const [appModule, authModule, firestoreModule] = await Promise.all([
+    import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-app.js`),
+    import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-auth.js`),
+    import(`https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}/firebase-firestore.js`)
+  ]);
+
+  const app = appModule.initializeApp(FIREBASE_CONFIG);
+  const auth = authModule.getAuth(app);
+  await authModule.signInAnonymously(auth);
+
+  const db = firestoreModule.getFirestore(app);
+  firebaseStore.api = firestoreModule;
+  firebaseStore.expensesRef = firestoreModule.collection(db, "households", FIREBASE_HOUSEHOLD_ID, "expenses");
+  firebaseStore.categoriesRef = firestoreModule.doc(db, "households", FIREBASE_HOUSEHOLD_ID, "settings", "categories");
+  firebaseStore.connected = true;
+
+  firebaseStore.unsubscribers = [
+    firestoreModule.onSnapshot(firebaseStore.expensesRef, handleExpenseSnapshot, handleFirestoreError),
+    firestoreModule.onSnapshot(firebaseStore.categoriesRef, handleCategorySnapshot, handleFirestoreError)
+  ];
+
+  setSyncStatus("Shared Firestore", "remote");
+}
+
+async function addExpense(expense) {
+  if (!firebaseStore.connected) {
+    saveExpenseLocally(expense);
+    return;
+  }
+
+  await firebaseStore.api.addDoc(firebaseStore.expensesRef, {
+    ...expense,
+    updatedAt: firebaseStore.api.serverTimestamp()
+  });
+}
+
+async function saveCategories() {
+  if (!firebaseStore.connected) {
+    saveJson(CATEGORY_KEY, state.categories);
+    return;
+  }
+
+  await firebaseStore.api.setDoc(firebaseStore.categoriesRef, {
+    categories: categoriesForFirestore(state.categories),
+    updatedAt: firebaseStore.api.serverTimestamp()
+  });
+}
+
+function saveExpenseLocally(expense) {
+  state.expenses.unshift(expense);
+  state.expenses.sort(sortExpenseDesc);
+  saveJson(STORAGE_KEY, state.expenses);
+}
+
+function handleExpenseSnapshot(snapshot) {
+  state.expenses = snapshot.docs
+    .map((doc) => normalizeRemoteExpense(doc.id, doc.data()))
+    .sort(sortExpenseDesc);
+  saveJson(STORAGE_KEY, state.expenses);
+  render();
+  setSyncStatus("Shared Firestore", "remote");
+}
+
+function handleCategorySnapshot(snapshot) {
+  if (!snapshot.exists()) {
+    firebaseStore.api.setDoc(firebaseStore.categoriesRef, {
+      categories: categoriesForFirestore(cloneCategories(defaultCategories)),
+      updatedAt: firebaseStore.api.serverTimestamp()
+    }).catch(handleFirestoreError);
+    return;
+  }
+
+  const categories = categoriesFromFirestore(snapshot.data().categories);
+  if (!categories.length) return;
+
+  state.categories = categories;
+  saveJson(CATEGORY_KEY, state.categories);
+  render();
+  setSyncStatus("Shared Firestore", "remote");
+}
+
+function handleFirestoreError(error) {
+  console.warn("Firestore sync error.", error);
+  firebaseStore.connected = false;
+  setSyncStatus("Phone local storage", "warning");
+}
+
+function hasFirebaseConfig() {
+  return ["apiKey", "authDomain", "projectId", "appId"].every((key) => Boolean(FIREBASE_CONFIG[key]));
+}
+
+function setSyncStatus(text, mode) {
+  els.syncStatus.textContent = text;
+  els.syncStatus.dataset.mode = mode;
 }
 
 function render() {
@@ -406,10 +534,12 @@ function renderDashboard() {
   els.monthDelta.textContent = previousTotal ? `${deltaText(monthTotal, previousTotal)} vs previous month` : formatMonth(state.selectedMonth);
   els.dailyAverage.textContent = formatInr(Math.round(monthTotal / Math.max(daysElapsed, 1)));
   els.entryCount.textContent = `${monthExpenses.length} ${monthExpenses.length === 1 ? "entry" : "entries"}`;
-  els.topCategory.textContent = top ? top[0] : "-";
+  els.topCategory.textContent = top ? top[0] : "No expenses";
   els.topCategoryAmount.textContent = top ? formatInr(top[1]) : "₹0";
   els.chartTotal.textContent = formatInr(monthTotal);
   els.chartSubtitle.textContent = `${formatMonth(state.selectedMonth)} by category`;
+  els.bottomPieTotal.textContent = formatInr(monthTotal);
+  els.bottomPieSubtitle.textContent = `${formatMonth(state.selectedMonth)} category split`;
 
   renderCategoryChart(grouped, monthTotal);
   renderTrendChart();
@@ -417,17 +547,30 @@ function renderDashboard() {
 }
 
 function renderCategoryChart(grouped, total) {
-  const canvas = els.categoryChart;
+  drawCategoryChart(els.categoryChart, els.categoryLegend, grouped, total, {
+    emptyLegend: "Add expenses to see category mix.",
+    innerRadius: 44,
+    centerLabel: "Total"
+  });
+
+  drawCategoryChart(els.bottomPieChart, els.bottomPieLegend, grouped, total, {
+    emptyLegend: "Add expenses to see this month's category pie.",
+    innerRadius: 0
+  });
+}
+
+function drawCategoryChart(canvas, legend, grouped, total, options = {}) {
   const ctx = canvas.getContext("2d");
   const cx = canvas.width / 2;
   const cy = canvas.height / 2;
   const radius = 78;
+  const innerRadius = options.innerRadius ?? 44;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (!total) {
     drawEmptyDonut(ctx, cx, cy, radius, "No data");
-    els.categoryLegend.innerHTML = `<div class="empty-state">Add expenses to see category mix.</div>`;
+    legend.innerHTML = `<div class="empty-state">${escapeHtml(options.emptyLegend || "Add expenses to see category mix.")}</div>`;
     return;
   }
 
@@ -445,18 +588,20 @@ function renderCategoryChart(grouped, total) {
     start += slice;
   });
 
-  ctx.beginPath();
-  ctx.arc(cx, cy, 44, 0, Math.PI * 2);
-  ctx.fillStyle = "#ffffff";
-  ctx.fill();
-  ctx.fillStyle = "#005073";
-  ctx.font = "700 15px system-ui";
-  ctx.textAlign = "center";
-  ctx.fillText("Total", cx, cy - 4);
-  ctx.font = "800 18px system-ui";
-  ctx.fillText(compactInr(total), cx, cy + 20);
+  if (innerRadius) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, innerRadius, 0, Math.PI * 2);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+    ctx.fillStyle = "#005073";
+    ctx.font = "700 15px system-ui";
+    ctx.textAlign = "center";
+    ctx.fillText(options.centerLabel || "Total", cx, cy - 4);
+    ctx.font = "800 18px system-ui";
+    ctx.fillText(compactInr(total), cx, cy + 20);
+  }
 
-  els.categoryLegend.innerHTML = entries
+  legend.innerHTML = entries
     .map(([category, amount], index) => {
       const percent = Math.round((amount / total) * 100);
       return `
@@ -585,38 +730,6 @@ function sum(expenses) {
   return expenses.reduce((total, expense) => total + Number(expense.amount || 0), 0);
 }
 
-function sampleExpenses() {
-  const today = new Date();
-  const days = [1, 2, 3, 5, 6, 9, 12, 15, 18, 21];
-  const samples = [
-    ["BESCOM", 1840, "paid"],
-    ["Groceries", 3260, "weekly"],
-    ["Petrol", 2500, "car"],
-    ["Food in Cisco", 420, "lunch"],
-    ["Vegetables", 560, "fresh"],
-    ["Maid Salary", 3500, "month"],
-    ["Airtel Mobile", 999, "plan"],
-    ["Medicine / pills", 780, "cold"],
-    ["Temple / Hundi", 300, "visit"],
-    ["Metro Card", 1000, "topup"]
-  ];
-
-  return samples.map(([itemName, amount, notes], index) => {
-    const item = findItem(itemName);
-    const date = new Date(today.getFullYear(), today.getMonth(), Math.min(days[index], today.getDate()));
-    return {
-      id: crypto.randomUUID(),
-      date: formatDateInput(date),
-      amount,
-      item: item.item,
-      category: item.category,
-      cadence: item.cadence,
-      notes,
-      createdAt: new Date().toISOString()
-    };
-  });
-}
-
 function loadJson(key, fallback) {
   try {
     const value = localStorage.getItem(key);
@@ -628,6 +741,62 @@ function loadJson(key, fallback) {
 
 function saveJson(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
+}
+
+function cloneCategories(categories) {
+  return categories.map((category) => ({
+    name: category.name,
+    items: category.items.map(([item, cadence]) => [item, cadence])
+  }));
+}
+
+function categoriesForFirestore(categories) {
+  return categories.map((category) => ({
+    name: category.name,
+    items: category.items.map(([name, cadence]) => ({ name, cadence }))
+  }));
+}
+
+function categoriesFromFirestore(categories) {
+  if (!Array.isArray(categories)) return [];
+  return categories
+    .map((category) => ({
+      name: String(category.name || "").trim(),
+      items: Array.isArray(category.items)
+        ? category.items
+            .map((item) => {
+              if (Array.isArray(item)) return [String(item[0] || "").trim(), item[1] || "occasional"];
+              return [String(item.name || "").trim(), item.cadence || "occasional"];
+            })
+            .filter(([name]) => name)
+        : []
+    }))
+    .filter((category) => category.name && category.items.length);
+}
+
+function normalizeRemoteExpense(id, data) {
+  return {
+    id,
+    date: String(data.date || formatDateInput(new Date())).slice(0, 10),
+    amount: Number(data.amount || 0),
+    item: String(data.item || "Expense"),
+    category: String(data.category || "Uncategorised"),
+    cadence: String(data.cadence || "occasional"),
+    notes: String(data.notes || "").slice(0, 20),
+    createdAt: timestampToIso(data.createdAt)
+  };
+}
+
+function timestampToIso(value) {
+  if (value && typeof value.toDate === "function") return value.toDate().toISOString();
+  if (typeof value === "string") return value;
+  return new Date(0).toISOString();
+}
+
+function sortExpenseDesc(a, b) {
+  const dateCompare = String(b.date || "").localeCompare(String(a.date || ""));
+  if (dateCompare) return dateCompare;
+  return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
 }
 
 function formatInr(value) {

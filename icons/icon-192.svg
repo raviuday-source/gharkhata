@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
-  <rect width="192" height="192" rx="38" fill="#005073"/>
-  <path d="M39 117h114" stroke="#00bceb" stroke-width="14" stroke-linecap="round"/>
-  <path d="M48 86h96" stroke="#6ebe4a" stroke-width="14" stroke-linecap="round"/>
-  <path d="M62 56h68" stroke="#fbab18" stroke-width="14" stroke-linecap="round"/>
-  <text x="96" y="151" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="800" fill="#ffffff">GK</text>
+  <rect width="192" height="192" rx="38" fill="#f4f9fc"/>
+  <circle cx="96" cy="100" r="68" fill="#ffffff"/>
+  <path d="M100 59c9-19 24-25 43-22-3 20-18 31-40 31" fill="#4b9f38"/>
+  <path d="M93 64c3-18 12-29 28-37" fill="none" stroke="#6b4b26" stroke-width="10" stroke-linecap="round"/>
+  <path d="M94 71c-15-18-50-6-60 24-16 49 14 78 37 72 12-3 20-3 31 0 24 6 54-23 37-72-10-30-46-42-60-24-9 10-15 10-25 0z" fill="#d9272e"/>
+  <path d="M53 104c-4-21 9-36 23-39" fill="none" stroke="#ff7a7a" stroke-width="12" stroke-linecap="round" opacity=".65"/>
+  <path d="M36 139c18 35 47 36 63 30 16 6 45 5 63-30" fill="none" stroke="#a31920" stroke-width="9" stroke-linecap="round" opacity=".28"/>
 </svg>

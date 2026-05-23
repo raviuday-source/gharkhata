@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="104" fill="#005073"/>
-  <path d="M104 313h304" stroke="#00bceb" stroke-width="38" stroke-linecap="round"/>
-  <path d="M128 229h256" stroke="#6ebe4a" stroke-width="38" stroke-linecap="round"/>
-  <path d="M165 149h182" stroke="#fbab18" stroke-width="38" stroke-linecap="round"/>
-  <text x="256" y="404" text-anchor="middle" font-family="Arial, sans-serif" font-size="92" font-weight="800" fill="#ffffff">GK</text>
+  <rect width="512" height="512" rx="104" fill="#f4f9fc"/>
+  <circle cx="256" cy="268" r="184" fill="#ffffff"/>
+  <path d="M267 157c24-51 65-67 115-58-9 53-49 82-107 82" fill="#4b9f38"/>
+  <path d="M247 170c9-47 33-78 74-98" fill="none" stroke="#6b4b26" stroke-width="28" stroke-linecap="round"/>
+  <path d="M252 189c-39-48-135-16-162 64-43 131 38 209 100 193 32-9 54-9 84 0 63 16 143-62 100-193-27-80-123-112-162-64-23 26-41 26-68 0z" fill="#d9272e"/>
+  <path d="M141 278c-12-57 23-96 62-105" fill="none" stroke="#ff7a7a" stroke-width="32" stroke-linecap="round" opacity=".65"/>
+  <path d="M96 373c48 94 126 97 168 80 42 17 120 14 168-80" fill="none" stroke="#a31920" stroke-width="24" stroke-linecap="round" opacity=".28"/>
 </svg>

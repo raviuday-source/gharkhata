@@ -28,12 +28,10 @@
         <div>
           <p class="eyebrow">Household Expense Desk</p>
           <h1>GharKhata</h1>
+          <p class="sync-status" id="syncStatus">Phone local storage</p>
         </div>
         <div class="header-actions">
           <button class="ghost-button compact-button" id="lockApp" type="button">Lock</button>
-          <button class="icon-button" id="seedDemo" type="button" aria-label="Load sample data" title="Load sample data">
-            <span aria-hidden="true">+</span>
-          </button>
         </div>
       </header>
 
@@ -49,7 +47,7 @@
             <strong id="dailyAverage">₹0</strong>
             <small id="entryCount">0 entries</small>
           </article>
-          <article class="metric-card">
+          <article class="metric-card top-category-card">
             <span>Top category</span>
             <strong id="topCategory">-</strong>
             <small id="topCategoryAmount">₹0</small>
@@ -150,16 +148,27 @@
             <button class="submit-button" type="submit">Prepare Email</button>
           </form>
           <p class="report-note">
-            Phone-only mode prepares the report in your mail app. A production backend is needed to send automatically from do-not-reply@gmail.com.
+            This prepares the report in your mail app. A production backend is needed to send automatically from do-not-reply@gmail.com.
           </p>
         </section>
 
         <section class="table-panel" aria-labelledby="recentTitle">
           <div class="section-title compact">
             <h2 id="recentTitle">Recent Expenses</h2>
-            <button class="ghost-button danger" id="clearData" type="button">Clear</button>
           </div>
           <div class="expense-list" id="expenseList"></div>
+        </section>
+
+        <section class="bottom-pie-panel chart-card" aria-labelledby="bottomPieTitle">
+          <div class="chart-header">
+            <div>
+              <h2 id="bottomPieTitle">Monthly Category Pie</h2>
+              <p id="bottomPieSubtitle">Current month split by category</p>
+            </div>
+            <span id="bottomPieTotal">₹0</span>
+          </div>
+          <canvas id="bottomPieChart" width="320" height="220" aria-label="Current month category pie chart"></canvas>
+          <div class="legend" id="bottomPieLegend"></div>
         </section>
       </main>
 
@@ -202,6 +211,7 @@
       </dialog>
     </div>
 
+    <script src="firebase-config.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

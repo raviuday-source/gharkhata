@@ -1,20 +1,54 @@
 # GharKhata
 
-GharKhata is a mobile-first household expense tracker for INR entries. It is designed to run as a static GitHub Pages site and can be installed from Chrome on Android using **Install app** or **Add to Home screen**.
+GharKhata is a mobile-first household expense tracker for INR entries. It is built as an installable PWA so it can run in mobile browsers on iOS and Android. It uses Firebase Firestore as the shared household database when configured, and falls back to local phone storage when Firebase is not configured.
 
-## Publish With GitHub Pages
+## What It Includes
 
-1. Create a new GitHub repository named `gharkhata`.
-2. Push this folder to the repository.
-3. In GitHub, open **Settings > Pages**.
-4. Set **Source** to **Deploy from a branch**.
-5. Select branch `main` and folder `/root`.
-6. Open the published URL on your Samsung phone and install it.
+- Sorted starter categories for the provided household expense list.
+- Shared storage using Firebase Firestore, with `localStorage` fallback.
+- INR amount entry with date, item, category, and a 20-character notes field.
+- Monthly total, daily average, top category, category mix chart, and six-month trend chart.
+- Category/item management for future additions.
+- Email report preparation for raw expenses, analysis only, or both.
 
-Once the URL is stable, the phone's local database remains attached to that same URL.
+## Run
 
-## Passcode
+From this folder:
 
-The app opens with a simple family passcode gate. Current passcode: `1234`.
+```sh
+python3 -m http.server 4173
+```
 
-This is a light browser-side lock for casual household use, not strong security.
+Then open:
+
+```text
+http://localhost:4173
+```
+
+## Firebase Firestore Setup
+
+The app is wired for Firestore, but `firebase-config.js` needs your Firebase web app config before the shared database becomes live.
+
+1. Create or open a Firebase project.
+2. Add a Web app and copy its Firebase config into `firebase-config.js`.
+3. Create a Firestore database.
+4. Enable Authentication > Sign-in method > Anonymous.
+5. Set Firestore rules to allow signed-in app users:
+
+```text
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /households/{householdId}/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
+```
+
+The current passcode is a convenience lock in the app UI, not a server-side security boundary. For stronger private-family access later, replace anonymous auth with named user sign-in and rules that only allow your household users.
+
+## Email Sender Note
+
+The app prepares an email report from the phone using `mailto:`. Sending automatically from `do-not-reply@gmail.com` requires a backend email service or SMTP relay because Gmail credentials cannot be safely embedded in a local mobile app.

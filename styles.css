@@ -120,6 +120,31 @@ h1 {
   letter-spacing: 0;
 }
 
+.sync-status {
+  width: fit-content;
+  margin-top: 8px;
+  padding: 5px 8px;
+  border: 1px solid rgba(0, 188, 235, 0.32);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.74);
+  color: var(--cisco-deep);
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.sync-status[data-mode="remote"] {
+  border-color: rgba(110, 190, 74, 0.42);
+  background: #eaf8e4;
+  color: #376d25;
+}
+
+.sync-status[data-mode="loading"],
+.sync-status[data-mode="warning"] {
+  border-color: rgba(251, 171, 24, 0.54);
+  background: #fff2d2;
+  color: #80540b;
+}
+
 h2 {
   font-size: 1.05rem;
   line-height: 1.2;
@@ -183,6 +208,17 @@ main {
   line-height: 1;
   letter-spacing: 0;
   overflow-wrap: anywhere;
+}
+
+.top-category-card strong {
+  font-size: clamp(1.05rem, 5.4vw, 1.5rem);
+  line-height: 1.14;
+}
+
+.top-category-card small {
+  color: var(--cisco-deep);
+  font-weight: 900;
+  opacity: 1;
 }
 
 .entry-panel,
@@ -419,6 +455,10 @@ select:focus {
   padding: 14px;
   margin-top: 12px;
   box-shadow: none;
+}
+
+.bottom-pie-panel {
+  margin-top: 0;
 }
 
 .chart-header {
@@ -693,7 +733,8 @@ dialog::backdrop {
   }
 
   .summary-grid,
-  .analytics-panel {
+  .analytics-panel,
+  .bottom-pie-panel {
     grid-column: 1 / -1;
   }
 

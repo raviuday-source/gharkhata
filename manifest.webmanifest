@@ -1,7 +1,7 @@
 {
   "name": "GharKhata",
   "short_name": "GharKhata",
-  "description": "A local-first INR household expense tracker.",
+  "description": "A shared INR household expense tracker.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f4f9fc",

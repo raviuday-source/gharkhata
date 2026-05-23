@@ -95,6 +95,9 @@ const els = {
   date: document.querySelector("#dateInput"),
   amount: document.querySelector("#amountInput"),
   item: document.querySelector("#itemInput"),
+  categoryPicker: document.querySelector("#categoryPicker"),
+  categoryPickerText: document.querySelector("#categoryPickerText"),
+  categoryPickerMeta: document.querySelector("#categoryPickerMeta"),
   notes: document.querySelector("#notesInput"),
   notesCount: document.querySelector("#notesCount"),
   monthTotal: document.querySelector("#monthTotal"),
@@ -119,6 +122,9 @@ const els = {
   newCadence: document.querySelector("#newCadenceInput"),
   categoryNames: document.querySelector("#categoryNames"),
   addCategoryItem: document.querySelector("#addCategoryItem"),
+  itemDialog: document.querySelector("#itemDialog"),
+  itemPickerList: document.querySelector("#itemPickerList"),
+  closeItemDialog: document.querySelector("#closeItemDialog"),
   reportForm: document.querySelector("#reportForm"),
   email: document.querySelector("#emailInput"),
   reportType: document.querySelector("#reportType"),
@@ -174,6 +180,23 @@ els.notes.addEventListener("input", () => {
 els.monthFilter.addEventListener("change", () => {
   state.selectedMonth = els.monthFilter.value;
   renderDashboard();
+});
+
+els.categoryPicker.addEventListener("click", () => {
+  els.itemDialog.showModal();
+});
+
+els.closeItemDialog.addEventListener("click", () => {
+  els.itemDialog.close();
+});
+
+els.itemPickerList.addEventListener("click", (event) => {
+  const option = event.target.closest("[data-item]");
+  if (!option) return;
+  els.item.value = option.dataset.item;
+  renderCategoryPickerSelection();
+  renderItemPickerList();
+  els.itemDialog.close();
 });
 
 els.manageCategories.addEventListener("click", () => {
@@ -279,8 +302,64 @@ function updateNotesCount() {
 }
 
 function renderItemOptions() {
-  els.item.innerHTML = allItems()
-    .map((item) => `<option value="${escapeHtml(item.item)}">${escapeHtml(item.item)} - ${escapeHtml(item.category)}</option>`)
+  const currentValue = els.item.value;
+  els.item.innerHTML = state.categories
+    .map((category) => {
+      const options = category.items
+        .map(([item]) => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`)
+        .join("");
+      return `<optgroup label="${escapeHtml(category.name)}">${options}</optgroup>`;
+    })
+    .join("");
+
+  const items = allItems();
+  if (items.some((item) => item.item === currentValue)) {
+    els.item.value = currentValue;
+  } else if (items.length) {
+    els.item.value = items[0].item;
+  }
+
+  renderCategoryPickerSelection();
+  renderItemPickerList();
+}
+
+function renderCategoryPickerSelection() {
+  const selected = findItem(els.item.value);
+  if (!selected) {
+    els.categoryPickerText.textContent = "Choose category";
+    els.categoryPickerMeta.textContent = "Tap to select";
+    return;
+  }
+
+  els.categoryPickerText.textContent = selected.item;
+  els.categoryPickerMeta.textContent = `${selected.category} · ${cadenceLabel(selected.cadence)}`;
+}
+
+function renderItemPickerList() {
+  const selectedItem = els.item.value;
+  els.itemPickerList.innerHTML = state.categories
+    .map((category) => {
+      const buttons = category.items
+        .map(([item, cadence]) => {
+          const isSelected = item === selectedItem;
+          return `
+            <button class="picker-option ${isSelected ? "is-selected" : ""}" type="button" data-item="${escapeHtml(item)}" aria-pressed="${isSelected}">
+              <span>${escapeHtml(item)}</span>
+              <small>${cadenceLabel(cadence)}</small>
+            </button>
+          `;
+        })
+        .join("");
+      return `
+        <section class="picker-group" aria-label="${escapeHtml(category.name)}">
+          <div class="picker-group-title">
+            <strong>${escapeHtml(category.name)}</strong>
+            <small>${category.items.length} items</small>
+          </div>
+          <div class="picker-options">${buttons}</div>
+        </section>
+      `;
+    })
     .join("");
 }
 

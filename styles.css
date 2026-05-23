@@ -250,6 +250,17 @@ select {
   outline: none;
 }
 
+select:not(.sr-select) {
+  appearance: none;
+  background:
+    linear-gradient(45deg, transparent 50%, var(--cisco-deep) 50%) right 18px center / 7px 7px no-repeat,
+    linear-gradient(135deg, var(--cisco-deep) 50%, transparent 50%) right 12px center / 7px 7px no-repeat,
+    linear-gradient(180deg, #ffffff, var(--soft-blue));
+  color: var(--cisco-deep);
+  font-weight: 800;
+  padding-right: 42px;
+}
+
 input:focus,
 select:focus {
   border-color: var(--cisco-medium);
@@ -286,6 +297,76 @@ select:focus {
 
 .money-input input:focus {
   box-shadow: none;
+}
+
+.category-field {
+  position: relative;
+}
+
+.sr-select {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.category-picker {
+  width: 100%;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(4, 159, 217, 0.32);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(0, 188, 235, 0.13), rgba(110, 190, 74, 0.1)),
+    #fff;
+  color: var(--ink);
+  padding: 10px 44px 10px 12px;
+  text-align: left;
+  box-shadow: inset 4px 0 0 var(--cisco-blue);
+  position: relative;
+}
+
+.category-picker::after {
+  content: "";
+  position: absolute;
+  right: 15px;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--cisco-deep);
+  border-bottom: 2px solid var(--cisco-deep);
+  transform: rotate(45deg);
+  margin-top: -5px;
+}
+
+.category-picker:focus {
+  border-color: var(--cisco-medium);
+  box-shadow:
+    inset 4px 0 0 var(--cisco-blue),
+    0 0 0 3px rgba(0, 188, 235, 0.18);
+  outline: none;
+}
+
+.category-picker strong,
+.category-picker small {
+  display: block;
+  line-height: 1.25;
+}
+
+.category-picker strong {
+  color: var(--cisco-deep);
+  font-size: 0.98rem;
+}
+
+.category-picker small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
 }
 
 .submit-button,
@@ -520,6 +601,85 @@ dialog::backdrop {
 .dialog-card {
   grid-template-columns: 1fr;
   padding: 16px;
+}
+
+.picker-dialog {
+  max-height: min(78vh, 720px);
+}
+
+.picker-list {
+  display: grid;
+  gap: 12px;
+  max-height: min(58vh, 560px);
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.picker-group {
+  display: grid;
+  gap: 8px;
+}
+
+.picker-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.picker-group-title strong {
+  color: var(--cisco-deep);
+  font-size: 0.84rem;
+}
+
+.picker-group-title small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.picker-options {
+  display: grid;
+  gap: 7px;
+}
+
+.picker-option {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  padding: 9px 10px;
+  text-align: left;
+}
+
+.picker-option span {
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.picker-option small {
+  flex: 0 0 auto;
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  background: var(--soft-blue);
+  color: var(--cisco-deep);
+  padding: 3px 8px;
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.picker-option.is-selected {
+  border-color: rgba(0, 188, 235, 0.72);
+  background: linear-gradient(135deg, rgba(0, 188, 235, 0.12), rgba(110, 190, 74, 0.12));
+  box-shadow: inset 4px 0 0 var(--cisco-blue);
 }
 
 @media (min-width: 720px) {

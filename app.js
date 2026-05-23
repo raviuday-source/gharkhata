@@ -91,6 +91,8 @@ const state = {
 const firebaseStore = {
   started: false,
   connected: false,
+  firstExpenseSnapshot: true,
+  db: null,
   api: null,
   expensesRef: null,
   categoriesRef: null,
@@ -332,13 +334,16 @@ async function setupFirestore() {
   await authModule.signInAnonymously(auth);
 
   const db = firestoreModule.getFirestore(app);
+  firebaseStore.db = db;
   firebaseStore.api = firestoreModule;
   firebaseStore.expensesRef = firestoreModule.collection(db, "households", FIREBASE_HOUSEHOLD_ID, "expenses");
   firebaseStore.categoriesRef = firestoreModule.doc(db, "households", FIREBASE_HOUSEHOLD_ID, "settings", "categories");
   firebaseStore.connected = true;
 
   firebaseStore.unsubscribers = [
-    firestoreModule.onSnapshot(firebaseStore.expensesRef, handleExpenseSnapshot, handleFirestoreError),
+    firestoreModule.onSnapshot(firebaseStore.expensesRef, (snapshot) => {
+      handleExpenseSnapshot(snapshot).catch(handleFirestoreError);
+    }, handleFirestoreError),
     firestoreModule.onSnapshot(firebaseStore.categoriesRef, handleCategorySnapshot, handleFirestoreError)
   ];
 
@@ -375,13 +380,36 @@ function saveExpenseLocally(expense) {
   saveJson(STORAGE_KEY, state.expenses);
 }
 
-function handleExpenseSnapshot(snapshot) {
-  state.expenses = snapshot.docs
+async function handleExpenseSnapshot(snapshot) {
+  const remoteExpenses = snapshot.docs
     .map((doc) => normalizeRemoteExpense(doc.id, doc.data()))
     .sort(sortExpenseDesc);
+
+  if (firebaseStore.firstExpenseSnapshot && !remoteExpenses.length && state.expenses.length) {
+    firebaseStore.firstExpenseSnapshot = false;
+    setSyncStatus("Moving phone data to Firestore", "loading");
+    await uploadLocalExpenses(state.expenses);
+    return;
+  }
+
+  firebaseStore.firstExpenseSnapshot = false;
+  state.expenses = remoteExpenses;
   saveJson(STORAGE_KEY, state.expenses);
   render();
   setSyncStatus("Shared Firestore", "remote");
+}
+
+async function uploadLocalExpenses(expenses) {
+  const batch = firebaseStore.api.writeBatch(firebaseStore.db);
+  expenses.forEach((expense) => {
+    const id = expense.id || crypto.randomUUID();
+    batch.set(firebaseStore.api.doc(firebaseStore.expensesRef, id), {
+      ...expense,
+      id,
+      updatedAt: firebaseStore.api.serverTimestamp()
+    });
+  });
+  await batch.commit();
 }
 
 function handleCategorySnapshot(snapshot) {

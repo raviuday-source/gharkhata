@@ -1,5 +1,7 @@
 const STORAGE_KEY = "gharkhata-expenses-v1";
 const CATEGORY_KEY = "gharkhata-categories-v1";
+const PASSCODE = "1234";
+const PASSCODE_SESSION_KEY = "gharkhata-unlocked-v1";
 
 const colors = ["#00bceb", "#005073", "#6ebe4a", "#fbab18", "#049fd9", "#097dbc", "#7f5af0", "#ef4565", "#2cb67d"];
 
@@ -84,6 +86,11 @@ const state = {
 };
 
 const els = {
+  appShell: document.querySelector("#appShell"),
+  passcodeScreen: document.querySelector("#passcodeScreen"),
+  passcodeForm: document.querySelector("#passcodeForm"),
+  passcodeInput: document.querySelector("#passcodeInput"),
+  passcodeError: document.querySelector("#passcodeError"),
   form: document.querySelector("#expenseForm"),
   date: document.querySelector("#dateInput"),
   amount: document.querySelector("#amountInput"),
@@ -116,11 +123,13 @@ const els = {
   email: document.querySelector("#emailInput"),
   reportType: document.querySelector("#reportType"),
   seedDemo: document.querySelector("#seedDemo"),
+  lockApp: document.querySelector("#lockApp"),
   clearData: document.querySelector("#clearData")
 };
 
 els.date.value = formatDateInput(new Date());
 
+setupPasscode();
 render();
 
 if ("serviceWorker" in navigator) {
@@ -214,6 +223,48 @@ els.clearData.addEventListener("click", () => {
   saveJson(STORAGE_KEY, state.expenses);
   render();
 });
+
+function setupPasscode() {
+  if (sessionStorage.getItem(PASSCODE_SESSION_KEY) === "true") {
+    unlockApp();
+  } else {
+    lockApp();
+    requestAnimationFrame(() => els.passcodeInput.focus());
+  }
+
+  els.passcodeForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (els.passcodeInput.value === PASSCODE) {
+      sessionStorage.setItem(PASSCODE_SESSION_KEY, "true");
+      els.passcodeInput.value = "";
+      els.passcodeError.textContent = "";
+      unlockApp();
+      return;
+    }
+
+    els.passcodeError.textContent = "Incorrect passcode.";
+    els.passcodeInput.value = "";
+    els.passcodeInput.focus();
+  });
+
+  els.lockApp.addEventListener("click", () => {
+    sessionStorage.removeItem(PASSCODE_SESSION_KEY);
+    lockApp();
+    requestAnimationFrame(() => els.passcodeInput.focus());
+  });
+}
+
+function unlockApp() {
+  els.passcodeScreen.classList.add("is-hidden");
+  els.appShell.classList.remove("is-locked");
+  els.appShell.removeAttribute("aria-hidden");
+}
+
+function lockApp() {
+  els.passcodeScreen.classList.remove("is-hidden");
+  els.appShell.classList.add("is-locked");
+  els.appShell.setAttribute("aria-hidden", "true");
+}
 
 function render() {
   updateNotesCount();

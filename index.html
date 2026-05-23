@@ -10,15 +10,31 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <div class="app-shell">
+    <section class="passcode-screen" id="passcodeScreen" aria-labelledby="passcodeTitle">
+      <form class="passcode-card" id="passcodeForm">
+        <p class="eyebrow">Private Household Access</p>
+        <h1 id="passcodeTitle">GharKhata</h1>
+        <label>
+          <span>Passcode</span>
+          <input id="passcodeInput" name="passcode" type="password" inputmode="numeric" autocomplete="current-password" maxlength="4" placeholder="4 digits" required>
+        </label>
+        <p class="passcode-error" id="passcodeError" role="alert"></p>
+        <button class="submit-button" type="submit">Unlock</button>
+      </form>
+    </section>
+
+    <div class="app-shell is-locked" id="appShell" aria-hidden="true">
       <header class="app-header">
         <div>
           <p class="eyebrow">Household Expense Desk</p>
           <h1>GharKhata</h1>
         </div>
-        <button class="icon-button" id="seedDemo" type="button" aria-label="Load sample data" title="Load sample data">
-          <span aria-hidden="true">+</span>
-        </button>
+        <div class="header-actions">
+          <button class="ghost-button compact-button" id="lockApp" type="button">Lock</button>
+          <button class="icon-button" id="seedDemo" type="button" aria-label="Load sample data" title="Load sample data">
+            <span aria-hidden="true">+</span>
+          </button>
+        </div>
       </header>
 
       <main>

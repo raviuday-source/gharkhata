@@ -12,3 +12,9 @@ GharKhata is a mobile-first household expense tracker for INR entries. It is des
 6. Open the published URL on your Samsung phone and install it.
 
 Once the URL is stable, the phone's local database remains attached to that same URL.
+
+## Passcode
+
+The app opens with a simple family passcode gate. Current passcode: `1234`.
+
+This is a light browser-side lock for casual household use, not strong security.

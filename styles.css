@@ -39,6 +39,45 @@ button {
   cursor: pointer;
 }
 
+.passcode-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgba(0, 188, 235, 0.18), rgba(244, 249, 252, 0.92)),
+    var(--wash);
+}
+
+.passcode-screen.is-hidden,
+.app-shell.is-locked {
+  display: none;
+}
+
+.passcode-card {
+  width: min(100%, 380px);
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  background: #fff;
+  border: 1px solid rgba(220, 232, 239, 0.95);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+}
+
+.passcode-card h1 {
+  margin-bottom: 6px;
+}
+
+.passcode-error {
+  min-height: 18px;
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .app-shell {
   width: min(100%, 620px);
   margin: 0 auto;
@@ -51,6 +90,12 @@ button {
   justify-content: space-between;
   gap: 16px;
   padding: 8px 2px 18px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .eyebrow {
@@ -263,6 +308,11 @@ select:focus {
   background: var(--soft-blue);
   padding: 0 12px;
   white-space: nowrap;
+}
+
+.compact-button {
+  min-height: 40px;
+  padding: 0 10px;
 }
 
 .ghost-button.danger {

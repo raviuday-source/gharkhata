@@ -17,9 +17,8 @@ The app does not use Cisco logos or imply Cisco endorsement.
 
 ## Starter Category Sorting
 
-- Utilities & Bills: BESCOM, Water Bill, Internet Bill, Airtel Mobile, Tata Play, Gas Cylinder
-- Household Help & Services: Maid Salary, Inspector Shop
-- Food & Groceries: Vegetables, Groceries, Bakery & Snacks, Food outside expense, Food in Cisco
+- Utilities & Bills: BESCOM, Water Bill, Internet Bill, Airtel Mobile, Tata Play, Gas Cylinder, Maid Salary
+- Food & Groceries: Vegetables, Groceries, Inspector Shop, Bakery & Snacks, Food outside expense, Food in Cisco
 - Travel & Transport: Petrol, Metro Card, Auto charges, KSRTC tickets
 - Family Allowances: Nikita Pay std, Nikita Pay misc, Raghav Pay
 - Investments & Insurance: Raghav MF 1, Raghav MF 2, LIC, Stock purchase domestic, Stock purchase international

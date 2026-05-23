@@ -724,6 +724,8 @@ dialog::backdrop {
 .picker-group-title strong {
   color: var(--cisco-deep);
   font-size: 0.84rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 .picker-group-title small {

@@ -17,14 +17,8 @@ const defaultCategories = [
       ["Internet Bill", "monthly"],
       ["Airtel Mobile", "monthly"],
       ["Tata Play", "monthly"],
-      ["Gas Cylinder", "quarterly"]
-    ]
-  },
-  {
-    name: "Household Help & Services",
-    items: [
-      ["Maid Salary", "monthly"],
-      ["Inspector Shop", "occasional"]
+      ["Gas Cylinder", "quarterly"],
+      ["Maid Salary", "monthly"]
     ]
   },
   {
@@ -32,6 +26,7 @@ const defaultCategories = [
     items: [
       ["Vegetables", "daily"],
       ["Groceries", "daily"],
+      ["Inspector Shop", "occasional"],
       ["Bakery & Snacks", "daily"],
       ["Food outside expense", "occasional"],
       ["Food in Cisco", "daily"]

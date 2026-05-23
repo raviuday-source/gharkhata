@@ -571,11 +571,13 @@ canvas {
   flex: 0 0 auto;
 }
 
-.category-search {
+.category-search,
+.picker-search {
   margin: -2px 0 12px;
 }
 
-.category-search input {
+.category-search input,
+.picker-search input {
   border-color: rgba(4, 159, 217, 0.28);
   background:
     linear-gradient(135deg, rgba(0, 188, 235, 0.1), rgba(255, 255, 255, 0.9)),

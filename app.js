@@ -88,6 +88,7 @@ const state = {
   categories: loadJson(CATEGORY_KEY, cloneCategories(defaultCategories)),
   selectedMonth: currentMonthKey(),
   categoryQuery: "",
+  itemPickerQuery: "",
   currentPage: routeFromHash()
 };
 
@@ -148,6 +149,7 @@ const els = {
   categoryNames: document.querySelector("#categoryNames"),
   addCategoryItem: document.querySelector("#addCategoryItem"),
   itemDialog: document.querySelector("#itemDialog"),
+  itemSearch: document.querySelector("#itemSearchInput"),
   itemPickerList: document.querySelector("#itemPickerList"),
   closeItemDialog: document.querySelector("#closeItemDialog"),
   lockApp: document.querySelector("#lockApp")
@@ -219,7 +221,11 @@ els.categorySearch.addEventListener("input", () => {
 });
 
 els.categoryPicker.addEventListener("click", () => {
+  state.itemPickerQuery = "";
+  els.itemSearch.value = "";
+  renderItemPickerList();
   els.itemDialog.showModal();
+  requestAnimationFrame(() => els.itemSearch.focus());
 });
 
 els.closeItemDialog.addEventListener("click", () => {
@@ -233,6 +239,11 @@ els.itemPickerList.addEventListener("click", (event) => {
   renderCategoryPickerSelection();
   renderItemPickerList();
   els.itemDialog.close();
+});
+
+els.itemSearch.addEventListener("input", () => {
+  state.itemPickerQuery = els.itemSearch.value.trim();
+  renderItemPickerList();
 });
 
 els.manageCategories.addEventListener("click", () => {
@@ -509,9 +520,25 @@ function renderCategoryPickerSelection() {
 
 function renderItemPickerList() {
   const selectedItem = els.item.value;
-  els.itemPickerList.innerHTML = state.categories
+  const query = state.itemPickerQuery.toLowerCase();
+  const groups = state.categories
     .map((category) => {
-      const buttons = category.items
+      const categoryMatches = category.name.toLowerCase().includes(query);
+      const filteredItems = query
+        ? category.items.filter(([item]) => categoryMatches || item.toLowerCase().includes(query))
+        : category.items;
+      return { ...category, filteredItems };
+    })
+    .filter((category) => category.filteredItems.length);
+
+  if (!groups.length) {
+    els.itemPickerList.innerHTML = `<div class="empty-state">No item matches "${escapeHtml(state.itemPickerQuery)}".</div>`;
+    return;
+  }
+
+  els.itemPickerList.innerHTML = groups
+    .map((category) => {
+      const buttons = category.filteredItems
         .map(([item, cadence]) => {
           const isSelected = item === selectedItem;
           return `
@@ -526,7 +553,7 @@ function renderItemPickerList() {
         <section class="picker-group" aria-label="${escapeHtml(category.name)}">
           <div class="picker-group-title">
             <strong>${escapeHtml(category.name)}</strong>
-            <small>${category.items.length} items</small>
+            <small>${category.filteredItems.length} ${category.filteredItems.length === 1 ? "match" : "items"}</small>
           </div>
           <div class="picker-options">${buttons}</div>
         </section>

@@ -586,6 +586,11 @@ canvas {
   font-weight: 800;
 }
 
+.category-bottom-action {
+  display: grid;
+  margin-top: 12px;
+}
+
 .category-group {
   padding: 10px;
 }

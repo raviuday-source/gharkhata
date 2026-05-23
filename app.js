@@ -86,7 +86,8 @@ const defaultCategories = [
 const state = {
   expenses: loadJson(STORAGE_KEY, []),
   categories: loadJson(CATEGORY_KEY, cloneCategories(defaultCategories)),
-  selectedMonth: currentMonthKey()
+  selectedMonth: currentMonthKey(),
+  categoryQuery: ""
 };
 
 const firebaseStore = {
@@ -134,6 +135,7 @@ const els = {
   categoryLegend: document.querySelector("#categoryLegend"),
   categoryList: document.querySelector("#categoryList"),
   categoryCount: document.querySelector("#categoryCount"),
+  categorySearch: document.querySelector("#categorySearch"),
   expenseList: document.querySelector("#expenseList"),
   manageCategories: document.querySelector("#manageCategories"),
   categoryDialog: document.querySelector("#categoryDialog"),
@@ -205,6 +207,11 @@ els.notes.addEventListener("input", () => {
 els.monthFilter.addEventListener("change", () => {
   state.selectedMonth = els.monthFilter.value;
   renderDashboard();
+});
+
+els.categorySearch.addEventListener("input", () => {
+  state.categoryQuery = els.categorySearch.value.trim();
+  renderCategories();
 });
 
 els.categoryPicker.addEventListener("click", () => {
@@ -533,16 +540,39 @@ function renderMonthOptions() {
 
 function renderCategories() {
   const items = allItems();
-  els.categoryCount.textContent = `${items.length} items`;
-  els.categoryNames.innerHTML = state.categories.map((category) => `<option value="${escapeHtml(category.name)}"></option>`).join("");
-  els.categoryList.innerHTML = state.categories
+  const query = state.categoryQuery.toLowerCase();
+  const groups = state.categories
     .map((category, index) => {
-      const chips = category.items
+      const categoryMatches = category.name.toLowerCase().includes(query);
+      const filteredItems = query
+        ? category.items.filter(([item]) => categoryMatches || item.toLowerCase().includes(query))
+        : category.items;
+      return { ...category, filteredItems, index };
+    })
+    .filter((category) => category.filteredItems.length);
+  const visibleItemCount = groups.reduce((total, category) => total + category.filteredItems.length, 0);
+
+  els.categoryCount.textContent = query
+    ? `${visibleItemCount} ${visibleItemCount === 1 ? "match" : "matches"}`
+    : `${items.length} items`;
+  els.categoryNames.innerHTML = state.categories.map((category) => `<option value="${escapeHtml(category.name)}"></option>`).join("");
+
+  if (!groups.length) {
+    els.categoryList.innerHTML = `<div class="empty-state">No category item matches "${escapeHtml(state.categoryQuery)}".</div>`;
+    return;
+  }
+
+  els.categoryList.innerHTML = groups
+    .map((category) => {
+      const chips = category.filteredItems
         .map(([item, cadence]) => `<span class="chip ${cadence}">${escapeHtml(item)} · ${cadenceLabel(cadence)}</span>`)
         .join("");
+      const countLabel = query
+        ? `${category.filteredItems.length} ${category.filteredItems.length === 1 ? "match" : "matches"}`
+        : `${category.items.length} items`;
       return `
-        <details class="category-group" ${index < 3 ? "open" : ""}>
-          <summary>${escapeHtml(category.name)} <small>${category.items.length} items</small></summary>
+        <details class="category-group" ${query || category.index < 3 ? "open" : ""}>
+          <summary>${escapeHtml(category.name)} <small>${countLabel}</small></summary>
           <div class="category-items">${chips}</div>
         </details>
       `;

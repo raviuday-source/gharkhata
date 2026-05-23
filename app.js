@@ -73,7 +73,7 @@ const defaultCategories = [
     ]
   },
   {
-    name: "Personal, Learning & Worship",
+    name: "Clothing, Stationary & Flower/Temple",
     items: [
       ["Clothes", "quarterly"],
       ["Books and Stationaries", "quarterly"],

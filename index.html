@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#00bceb">
+    <meta name="description" content="GharKhata household expense tracker for INR spending.">
+    <title>GharKhata</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Household Expense Desk</p>
+          <h1>GharKhata</h1>
+        </div>
+        <button class="icon-button" id="seedDemo" type="button" aria-label="Load sample data" title="Load sample data">
+          <span aria-hidden="true">+</span>
+        </button>
+      </header>
+
+      <main>
+        <section class="summary-grid" aria-label="Monthly overview">
+          <article class="metric-card primary">
+            <span>This month</span>
+            <strong id="monthTotal">₹0</strong>
+            <small id="monthDelta">Ready for entries</small>
+          </article>
+          <article class="metric-card">
+            <span>Daily average</span>
+            <strong id="dailyAverage">₹0</strong>
+            <small id="entryCount">0 entries</small>
+          </article>
+          <article class="metric-card">
+            <span>Top category</span>
+            <strong id="topCategory">-</strong>
+            <small id="topCategoryAmount">₹0</small>
+          </article>
+        </section>
+
+        <section class="entry-panel" aria-labelledby="entryTitle">
+          <div class="section-title">
+            <h2 id="entryTitle">Add Expense</h2>
+            <button class="ghost-button" id="manageCategories" type="button">Categories</button>
+          </div>
+
+          <form id="expenseForm" class="expense-form">
+            <label>
+              <span>Date</span>
+              <input id="dateInput" name="date" type="date" required>
+            </label>
+            <label>
+              <span>Amount</span>
+              <div class="money-input">
+                <span>₹</span>
+                <input id="amountInput" name="amount" type="number" min="1" step="1" placeholder="0" required>
+              </div>
+            </label>
+            <label class="wide">
+              <span>Item</span>
+              <select id="itemInput" name="item" required></select>
+            </label>
+            <label class="wide">
+              <span>Notes <em id="notesCount">0/20</em></span>
+              <input id="notesInput" name="notes" maxlength="20" placeholder="20 chars max">
+            </label>
+            <button class="submit-button wide" type="submit">Save Expense</button>
+          </form>
+        </section>
+
+        <section class="analytics-panel" aria-labelledby="analyticsTitle">
+          <div class="section-title compact">
+            <h2 id="analyticsTitle">Monthly Analysis</h2>
+            <select id="monthFilter" aria-label="Month filter"></select>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <h3>Spend Mix</h3>
+                <p id="chartSubtitle">Current month by category</p>
+              </div>
+              <span id="chartTotal">₹0</span>
+            </div>
+            <canvas id="categoryChart" width="320" height="220" aria-label="Category spending donut chart"></canvas>
+            <div class="legend" id="categoryLegend"></div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-header">
+              <div>
+                <h3>Month Trend</h3>
+                <p>Totals across stored months</p>
+              </div>
+            </div>
+            <canvas id="trendChart" width="320" height="180" aria-label="Monthly spending trend bar chart"></canvas>
+          </div>
+        </section>
+
+        <section class="category-panel" aria-labelledby="categoryTitle">
+          <div class="section-title">
+            <h2 id="categoryTitle">Categories</h2>
+            <span id="categoryCount"></span>
+          </div>
+          <div class="category-list" id="categoryList"></div>
+        </section>
+
+        <section class="report-panel" aria-labelledby="reportTitle">
+          <div class="section-title">
+            <h2 id="reportTitle">Email Report</h2>
+            <span class="sender-pill">From: do-not-reply@gmail.com</span>
+          </div>
+          <form id="reportForm" class="report-form">
+            <label>
+              <span>Send to</span>
+              <input id="emailInput" name="email" type="email" placeholder="name@example.com" required>
+            </label>
+            <label>
+              <span>Report type</span>
+              <select id="reportType" name="reportType">
+                <option value="raw">Raw expense</option>
+                <option value="analysis">Analysis only</option>
+                <option value="both">Both</option>
+              </select>
+            </label>
+            <button class="submit-button" type="submit">Prepare Email</button>
+          </form>
+          <p class="report-note">
+            Phone-only mode prepares the report in your mail app. A production backend is needed to send automatically from do-not-reply@gmail.com.
+          </p>
+        </section>
+
+        <section class="table-panel" aria-labelledby="recentTitle">
+          <div class="section-title compact">
+            <h2 id="recentTitle">Recent Expenses</h2>
+            <button class="ghost-button danger" id="clearData" type="button">Clear</button>
+          </div>
+          <div class="expense-list" id="expenseList"></div>
+        </section>
+      </main>
+
+      <dialog id="categoryDialog">
+        <form method="dialog" class="dialog-card">
+          <div class="section-title">
+            <h2>Add Item or Category</h2>
+            <button class="icon-button subtle" value="cancel" type="submit" aria-label="Close" title="Close">x</button>
+          </div>
+          <label>
+            <span>Category</span>
+            <input id="newCategoryInput" list="categoryNames" placeholder="e.g. Education">
+            <datalist id="categoryNames"></datalist>
+          </label>
+          <label>
+            <span>Item</span>
+            <input id="newItemInput" placeholder="e.g. School fees">
+          </label>
+          <label>
+            <span>Cadence</span>
+            <select id="newCadenceInput">
+              <option value="monthly">Monthly</option>
+              <option value="daily">Daily/weekly</option>
+              <option value="quarterly">Every 2-3 months</option>
+              <option value="occasional">Occasional</option>
+            </select>
+          </label>
+          <button class="submit-button" id="addCategoryItem" value="default" type="button">Add</button>
+        </form>
+      </dialog>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

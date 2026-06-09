@@ -795,14 +795,6 @@ function buildExpensePdfLines(selectedMonth) {
     });
   }
 
-  addPdfLine(lines, "Configured Category Items", { size: 14, bold: true, gap: 8, maxChars: 80 });
-  state.categories.forEach((category) => {
-    addPdfLine(lines, category.name, { size: 11, bold: true, gap: 3, maxChars: 90 });
-    category.items.forEach(([item, cadence]) => {
-      addPdfLine(lines, `- ${item} (${cadenceLabel(cadence)})`, { size: 9, gap: 1, maxChars: 102 });
-    });
-    addPdfLine(lines, "", { size: 9, gap: 5 });
-  });
 
   return lines;
 }

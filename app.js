@@ -122,6 +122,7 @@ const els = {
   topCategory: document.querySelector("#topCategory"),
   topCategoryAmount: document.querySelector("#topCategoryAmount"),
   monthFilter: document.querySelector("#monthFilter"),
+  downloadPdf: document.querySelector("#downloadPdf"),
   chartTotal: document.querySelector("#chartTotal"),
   chartSubtitle: document.querySelector("#chartSubtitle"),
   categoryChart: document.querySelector("#categoryChart"),
@@ -209,6 +210,8 @@ els.monthFilter.addEventListener("change", () => {
   state.selectedMonth = els.monthFilter.value;
   renderDashboard();
 });
+
+els.downloadPdf.addEventListener("click", downloadAnalyticsPdf);
 
 els.categorySearch.addEventListener("input", () => {
   state.categoryQuery = els.categorySearch.value.trim();
@@ -756,6 +759,199 @@ function renderExpenseList(expenses) {
       </article>
     `)
     .join("");
+}
+
+
+function downloadAnalyticsPdf() {
+  const lines = buildExpensePdfLines(state.selectedMonth);
+  const pdf = createPdfDocument(lines);
+  const blob = new Blob([pdf], { type: "application/pdf" });
+  downloadBlob(blob, `GharKhata-${state.selectedMonth}-expenses.pdf`);
+}
+
+function buildExpensePdfLines(selectedMonth) {
+  const monthExpenses = state.expenses
+    .filter((expense) => monthKey(expense.date) === selectedMonth)
+    .sort(sortExpenseForPdf);
+  const lines = [];
+  const monthTotal = sum(monthExpenses);
+
+  addPdfLine(lines, "GharKhata Expense Report", { size: 18, bold: true, gap: 10, maxChars: 70 });
+  addPdfLine(lines, `Month: ${formatMonth(selectedMonth)}`, { size: 12, bold: true, gap: 2 });
+  addPdfLine(lines, `Generated: ${new Intl.DateTimeFormat("en-IN", { dateStyle: "medium" }).format(new Date())}`, { size: 10, gap: 2 });
+  addPdfLine(lines, `Grand Total: ${formatPdfAmount(monthTotal)}`, { size: 13, bold: true, gap: 10 });
+
+  if (!monthExpenses.length) {
+    addPdfLine(lines, `No expenses recorded for ${formatMonth(selectedMonth)}.`, { size: 10, gap: 10 });
+  } else {
+    groupExpensesForPdf(monthExpenses).forEach(([category, expenses]) => {
+      addPdfLine(lines, `${category} - Total ${formatPdfAmount(sum(expenses))}`, { size: 12, bold: true, gap: 4 });
+      addPdfLine(lines, "Date | Item | Notes | Cost", { size: 9, bold: true, gap: 2, maxChars: 106 });
+      expenses.forEach((expense) => {
+        const notes = expense.notes ? expense.notes : "-";
+        addPdfLine(lines, `${formatDate(expense.date)} | ${expense.item} | ${notes} | ${formatPdfAmount(expense.amount)}`, { size: 9, gap: 1, maxChars: 106 });
+      });
+      addPdfLine(lines, "", { size: 9, gap: 7 });
+    });
+  }
+
+  addPdfLine(lines, "Configured Category Items", { size: 14, bold: true, gap: 8, maxChars: 80 });
+  state.categories.forEach((category) => {
+    addPdfLine(lines, category.name, { size: 11, bold: true, gap: 3, maxChars: 90 });
+    category.items.forEach(([item, cadence]) => {
+      addPdfLine(lines, `- ${item} (${cadenceLabel(cadence)})`, { size: 9, gap: 1, maxChars: 102 });
+    });
+    addPdfLine(lines, "", { size: 9, gap: 5 });
+  });
+
+  return lines;
+}
+
+function groupExpensesForPdf(expenses) {
+  const grouped = expenses.reduce((map, expense) => {
+    const category = expense.category || "Uncategorised";
+    if (!map.has(category)) map.set(category, []);
+    map.get(category).push(expense);
+    return map;
+  }, new Map());
+
+  return [...grouped.entries()].sort(([categoryA], [categoryB]) => {
+    const indexDelta = categoryOrderIndex(categoryA) - categoryOrderIndex(categoryB);
+    return indexDelta || categoryA.localeCompare(categoryB);
+  });
+}
+
+function sortExpenseForPdf(a, b) {
+  const categoryDelta = categoryOrderIndex(a.category) - categoryOrderIndex(b.category);
+  if (categoryDelta) return categoryDelta;
+  const dateDelta = String(a.date || "").localeCompare(String(b.date || ""));
+  if (dateDelta) return dateDelta;
+  return String(a.item || "").localeCompare(String(b.item || ""));
+}
+
+function categoryOrderIndex(categoryName) {
+  const index = state.categories.findIndex((category) => category.name === categoryName);
+  return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+}
+
+function addPdfLine(lines, text, options = {}) {
+  const normalized = normalizePdfText(text);
+  const maxChars = options.maxChars || 92;
+  const baseLine = {
+    size: options.size || 10,
+    bold: Boolean(options.bold),
+    gap: options.gap || 0
+  };
+
+  if (!normalized) {
+    lines.push({ ...baseLine, text: "" });
+    return;
+  }
+
+  const words = normalized.split(" ");
+  let current = "";
+  words.forEach((word) => {
+    const candidate = current ? `${current} ${word}` : word;
+    if (candidate.length > maxChars && current) {
+      lines.push({ ...baseLine, text: current });
+      current = word;
+      return;
+    }
+    current = candidate;
+  });
+
+  if (current) lines.push({ ...baseLine, text: current });
+}
+
+function createPdfDocument(lines) {
+  const pageWidth = 595;
+  const pageHeight = 842;
+  const margin = 40;
+  const pages = createPdfPages(lines, pageHeight, margin);
+  const maxObjectId = 4 + pages.length * 2;
+  const offsets = [0];
+  let output = "%PDF-1.4\n";
+
+  function addObject(id, body) {
+    offsets[id] = output.length;
+    output += `${id} 0 obj\n${body}\nendobj\n`;
+  }
+
+  addObject(1, "<< /Type /Catalog /Pages 2 0 R >>");
+  addObject(2, `<< /Type /Pages /Kids [${pages.map((_, index) => `${5 + index * 2} 0 R`).join(" ")}] /Count ${pages.length} >>`);
+  addObject(3, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+  addObject(4, "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
+
+  pages.forEach((pageLines, index) => {
+    const pageId = 5 + index * 2;
+    const contentId = pageId + 1;
+    const stream = pageLines
+      .filter((line) => line.text)
+      .map((line) => `BT /F${line.bold ? "2" : "1"} ${line.size} Tf ${margin} ${line.y.toFixed(2)} Td (${escapePdfText(line.text)}) Tj ET`)
+      .join("\n");
+
+    addObject(pageId, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${contentId} 0 R >>`);
+    addObject(contentId, `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`);
+  });
+
+  const xrefStart = output.length;
+  output += `xref\n0 ${maxObjectId + 1}\n0000000000 65535 f \n`;
+  for (let id = 1; id <= maxObjectId; id += 1) {
+    output += `${String(offsets[id]).padStart(10, "0")} 00000 n \n`;
+  }
+  output += `trailer\n<< /Size ${maxObjectId + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+  return output;
+}
+
+function createPdfPages(lines, pageHeight, margin) {
+  const pages = [];
+  let page = [];
+  let y = pageHeight - margin;
+
+  lines.forEach((line) => {
+    const lineHeight = Math.max(line.size + 4, 13);
+    if (y - lineHeight < margin && page.length) {
+      pages.push(page);
+      page = [];
+      y = pageHeight - margin;
+    }
+    page.push({ ...line, y });
+    y -= lineHeight + line.gap;
+  });
+
+  if (page.length) pages.push(page);
+  return pages;
+}
+
+function formatPdfAmount(value) {
+  return `INR ${new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(value || 0)}`;
+}
+
+function normalizePdfText(value) {
+  return String(value ?? "")
+    .replace(/\u20b9/g, "INR ")
+    .normalize("NFKD")
+    .replace(/[^\x20-\x7E]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function escapePdfText(value) {
+  return normalizePdfText(value)
+    .replace(/\\/g, "\\\\")
+    .replace(/\(/g, "\\(")
+    .replace(/\)/g, "\\)");
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function allItems() {

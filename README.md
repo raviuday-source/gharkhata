@@ -9,6 +9,7 @@ GharKhata is a mobile-first household expense tracker for INR entries. It is bui
 - INR amount entry with date, item, category, and a 20-character notes field.
 - Monthly total, daily average, top category, category mix chart, monthly pie chart, and six-month trend chart.
 - Separate Categories and Analytics & Trends pages linked from the home screen.
+- Downloadable PDF expense report from Analytics & Trends, grouped by category.
 - Category/item management for future additions.
 
 ## Run

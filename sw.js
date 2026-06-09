@@ -1,4 +1,4 @@
-const CACHE_NAME = "gharkhata-v9";
+const CACHE_NAME = "gharkhata-v10";
 const ASSETS = [
   "./",
   "./index.html",
